@@ -93,7 +93,7 @@ const ShopeePixPayment = () => {
       const expiry = new Date(currentPayment.vencimento);
       const created = currentPayment.createdAt
         ? new Date(currentPayment.createdAt)
-        : new Date(expiry - 30 * 60 * 1000);
+        : new Date(expiry.getTime() - 24 * 60 * 60 * 1000);
       const tempoTotal = expiry - created;
       const tempoRestante = expiry - now;
       const percent = tempoTotal > 0 ? (tempoRestante / tempoTotal) * 100 : 0;
@@ -209,8 +209,8 @@ const ShopeePixPayment = () => {
   };
 
   const getTimeRemaining = (vencimento) => {
-    const now = new Date();
-    const expiry = new Date(vencimento);
+    const now = Date.now();
+    const expiry = new Date(vencimento).getTime();
     const diff = expiry - now;
     if (diff <= 0) return 'Expirado';
     const hours = Math.floor(diff / (1000 * 60 * 60));
