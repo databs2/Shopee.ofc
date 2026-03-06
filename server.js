@@ -60,6 +60,18 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// Converte data local (datetime-local do navegador) para UTC corretamente
+// O datetime-local envia sem timezone, então tratamos como horário de Brasília (UTC-3)
+const parseDateBrasilia = (dateStr) => {
+  if (!dateStr) return null;
+  // Se já vier como ISO com timezone, usa direto
+  if (dateStr.includes('Z') || dateStr.includes('+')) {
+    return new Date(dateStr);
+  }
+  // Caso contrário, assume que é horário de Brasília (UTC-3) e converte para UTC
+  return new Date(dateStr + '-03:00');
+};
+
 // CRIAR ADMIN PADRÃO
 async function createDefaultAdmin() {
   try {
@@ -116,7 +128,6 @@ app.get('/api/payments', async (req, res) => {
   }
 });
 
-// NOVA ROTA: Buscar pagamento individual
 app.get('/api/payments/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -134,7 +145,10 @@ app.post('/api/payments', authenticateToken, async (req, res) => {
   try {
     const { valor, pixCode, vencimento, qrCodeUrl, nomeProduto, nomePagador, cpfPagador } = req.body;
     const payment = await Payment.create({ 
-      valor, pixCode, vencimento, qrCodeUrl,
+      valor,
+      pixCode,
+      vencimento: parseDateBrasilia(vencimento),
+      qrCodeUrl,
       nomeProduto: nomeProduto || '',
       nomePagador: nomePagador || '',
       cpfPagador: cpfPagador || ''
@@ -151,7 +165,15 @@ app.put('/api/payments/:id', authenticateToken, async (req, res) => {
     const { valor, pixCode, vencimento, qrCodeUrl, nomeProduto, nomePagador, cpfPagador } = req.body;
     const payment = await Payment.findByIdAndUpdate(
       id, 
-      { valor, pixCode, vencimento, qrCodeUrl, nomeProduto, nomePagador, cpfPagador }, 
+      {
+        valor,
+        pixCode,
+        vencimento: parseDateBrasilia(vencimento),
+        qrCodeUrl,
+        nomeProduto,
+        nomePagador,
+        cpfPagador
+      }, 
       { new: true }
     );
     if (!payment) return res.status(404).json({ message: 'Pagamento não encontrado' });
@@ -213,7 +235,6 @@ app.get('/pagamento', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// NOVA ROTA: Aceitar ID na URL
 app.get('/pagamento/:id', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
