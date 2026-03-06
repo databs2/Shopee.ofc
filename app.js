@@ -482,23 +482,23 @@ const ShopeePixPayment = () => {
                     <p className="text-xs text-gray-400 mb-1">Pague com seu banco preferido</p>
                     <div className="flex flex-wrap justify-center gap-2 mt-1">
                       <div className="flex items-center gap-1.5 bg-gray-100 rounded-full px-3 py-1">
-                        <span className="w-4 h-4 rounded-full flex-shrink-0 bg-purple-600"></span>
+                        <img src="/nubank-logo.png" alt="Nubank" className="w-4 h-4 object-contain flex-shrink-0" />
                         <span className="text-xs font-medium text-gray-600">Nubank</span>
                       </div>
                       <div className="flex items-center gap-1.5 bg-gray-100 rounded-full px-3 py-1">
-                        <span className="w-4 h-4 rounded-full flex-shrink-0" style={{backgroundColor:'#EC7000'}}></span>
+                        <img src="/itau-logo.png" alt="Itaú" className="w-4 h-4 object-contain flex-shrink-0" />
                         <span className="text-xs font-medium text-gray-600">Itaú</span>
                       </div>
                       <div className="flex items-center gap-1.5 bg-gray-100 rounded-full px-3 py-1">
-                        <span className="w-4 h-4 rounded-full flex-shrink-0 bg-red-600"></span>
+                        <img src="/bradesco-logo.png" alt="Bradesco" className="w-4 h-4 object-contain flex-shrink-0" />
                         <span className="text-xs font-medium text-gray-600">Bradesco</span>
                       </div>
                       <div className="flex items-center gap-1.5 bg-gray-100 rounded-full px-3 py-1">
-                        <span className="w-4 h-4 rounded-full flex-shrink-0 bg-yellow-400"></span>
+                        <img src="/bb-logo.png" alt="Banco do Brasil" className="w-4 h-4 object-contain flex-shrink-0" />
                         <span className="text-xs font-medium text-gray-600">Banco do Brasil</span>
                       </div>
                       <div className="flex items-center gap-1.5 bg-gray-100 rounded-full px-3 py-1">
-                        <span className="w-4 h-4 rounded-full flex-shrink-0 bg-blue-700"></span>
+                        <img src="/caixa-logo.png" alt="Caixa" className="w-4 h-4 object-contain flex-shrink-0" />
                         <span className="text-xs font-medium text-gray-600">Caixa</span>
                       </div>
                     </div>
