@@ -59,6 +59,7 @@ const ShopeePixPayment = () => {
   const [timeRemaining, setTimeRemaining] = useState('');
   const [loading, setLoading] = useState(false);
   const [paymentId, setPaymentId] = useState(null);
+  const [progressPercent, setProgressPercent] = useState(100);
 
   useEffect(() => {
     const path = window.location.pathname;
@@ -80,11 +81,23 @@ const ShopeePixPayment = () => {
       loadPayments();
     }
   }, []);
+
   useEffect(() => {
     if (!currentPayment) return;
     const updateTimer = () => {
       const result = getTimeRemaining(currentPayment.vencimento);
       setTimeRemaining(result);
+
+      // Calcula porcentagem para a barra de progresso
+      const now = new Date();
+      const expiry = new Date(currentPayment.vencimento);
+      const created = currentPayment.createdAt
+        ? new Date(currentPayment.createdAt)
+        : new Date(expiry - 30 * 60 * 1000);
+      const tempoTotal = expiry - created;
+      const tempoRestante = expiry - now;
+      const percent = tempoTotal > 0 ? (tempoRestante / tempoTotal) * 100 : 0;
+      setProgressPercent(Math.max(0, Math.min(100, percent)));
     };
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
@@ -218,6 +231,12 @@ const ShopeePixPayment = () => {
     const numbers = cpf.replace(/\D/g, '');
     return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
   };
+
+  // Gera número de pedido legível a partir do _id (últimos 8 chars em maiúsculo)
+  const formatOrderNumber = (id) => {
+    if (!id) return '--------';
+    return id.toString().slice(-8).toUpperCase();
+  };
  
   // TELA DE LOGIN
   if (showLogin && !isAdmin) {
@@ -296,6 +315,8 @@ const ShopeePixPayment = () => {
   // TELA DO CLIENTE
   return (
     <div className="min-h-screen bg-gray-100">
+
+      {/* HEADER SHOPEE — sem alterações */}
       <div className="bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 py-2 px-4">
         <div className="max-w-2xl mx-auto px-2 py-4">
           <div className="flex items-center gap-3">
@@ -310,15 +331,94 @@ const ShopeePixPayment = () => {
           </div>
         </div>
       </div>
+
+      {/* ========================================================
+          PARTE 1 — BLOCO DE INFORMAÇÕES DO PEDIDO
+          Aparece logo abaixo do header, só quando há pagamento.
+          Mostra: número do pedido, vendedor e status com ping.
+      ======================================================== */}
+      {currentPayment && (
+        <div className="bg-white border-b border-gray-200 shadow-sm">
+          <div className="max-w-lg mx-auto px-4 py-3">
+            <div className="flex items-center justify-between">
+
+              {/* Número do pedido */}
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <div>
+                  <p className="text-xs text-gray-400 leading-none mb-0.5">Nº do Pedido</p>
+                  <p className="text-xs font-semibold text-gray-700 font-mono tracking-wide">
+                    {formatOrderNumber(currentPayment._id)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Divisor vertical */}
+              <div className="w-px h-8 bg-gray-200"></div>
+
+              {/* Vendido por */}
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <div>
+                  <p className="text-xs text-gray-400 leading-none mb-0.5">Vendido por</p>
+                  <p className="text-xs font-semibold text-orange-500">Shopee</p>
+                </div>
+              </div>
+
+              {/* Divisor vertical */}
+              <div className="w-px h-8 bg-gray-200"></div>
+
+              {/* Status com bolinha piscando */}
+              <div className="flex items-center gap-2">
+                <div className="relative flex-shrink-0 mt-0.5">
+                  <span className="flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-orange-500"></span>
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 leading-none mb-0.5">Status</p>
+                  <p className="text-xs font-semibold text-orange-500">Aguardando Pgto.</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ========================================================
+          FIM PARTE 1
+      ======================================================== */}
+
       <div className="max-w-lg mx-auto p-4">
         <div className="bg-white rounded-lg shadow-md overflow-hidden mt-4">
           <div className="bg-gray-50 border-b border-gray-200 px-5 py-4">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-700 text-sm font-medium">Pagamento Total</span>
-              <span className="text-2xl font-bold text-orange-600">
-                {currentPayment ? formatCurrency(currentPayment.valor) : 'R$0,00'}
-              </span>
-            </div>
+            {currentPayment ? (
+              <>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Subtotal</span>
+                  <span className="text-sm text-gray-600">{formatCurrency(currentPayment.valor)}</span>
+                </div>
+                <div className="flex justify-between items-center mt-1">
+                  <span className="text-sm text-gray-600">Frete</span>
+                  <span className="text-sm text-green-600 font-semibold">Grátis</span>
+                </div>
+                <div className="border-t border-gray-200 my-2"></div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-700 text-sm font-bold">Total</span>
+                  <span className="text-2xl font-bold text-orange-600">{formatCurrency(currentPayment.valor)}</span>
+                </div>
+              </>
+            ) : (
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700 text-sm font-medium">Pagamento Total</span>
+                <span className="text-2xl font-bold text-orange-600">R$0,00</span>
+              </div>
+            )}
           </div>
           <div className="p-5">
             {!currentPayment ? (
@@ -340,13 +440,27 @@ const ShopeePixPayment = () => {
                     <p className="text-xs text-gray-600 mt-1">
                       Vencimento em {formatVencimento(currentPayment.vencimento)}
                     </p>
+                    {/* Barra de progresso — Parte 2 */}
+                    <div className="bg-gray-200 rounded-full h-1.5 mt-2">
+                      <div
+                        className="bg-orange-500 rounded-full h-1.5 transition-all duration-1000"
+                        style={{width: `${progressPercent}%`}}
+                      ></div>
+                    </div>
                   </div>
                 </div>
 
                 {currentPayment?.nomeProduto && (
-                  <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <p className="text-xs text-gray-600 mb-1">Produto</p>
-                    <p className="text-sm font-semibold text-gray-800">{currentPayment.nomeProduto}</p>
+                  <div className="mb-4 flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    <div className="w-14 h-14 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg className="w-7 h-7 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Produto</p>
+                      <p className="text-sm font-semibold text-gray-800">{currentPayment.nomeProduto}</p>
+                    </div>
                   </div>
                 )}
 
@@ -361,6 +475,33 @@ const ShopeePixPayment = () => {
                   </div>
                   <div className="bg-white border border-gray-200 rounded-lg p-4 flex justify-center items-center">
                     <img src={currentPayment.qrCodeUrl} alt="QR Code Pix" className="w-60 h-60 object-contain" />
+                  </div>
+
+                  {/* PARTE 6 — Bancos */}
+                  <div className="mt-3 text-center">
+                    <p className="text-xs text-gray-400 mb-1">Pague com seu banco preferido</p>
+                    <div className="flex flex-wrap justify-center gap-2 mt-1">
+                      <div className="flex items-center gap-1.5 bg-gray-100 rounded-full px-3 py-1">
+                        <span className="w-4 h-4 rounded-full flex-shrink-0 bg-purple-600"></span>
+                        <span className="text-xs font-medium text-gray-600">Nubank</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 bg-gray-100 rounded-full px-3 py-1">
+                        <span className="w-4 h-4 rounded-full flex-shrink-0" style={{backgroundColor:'#EC7000'}}></span>
+                        <span className="text-xs font-medium text-gray-600">Itaú</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 bg-gray-100 rounded-full px-3 py-1">
+                        <span className="w-4 h-4 rounded-full flex-shrink-0 bg-red-600"></span>
+                        <span className="text-xs font-medium text-gray-600">Bradesco</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 bg-gray-100 rounded-full px-3 py-1">
+                        <span className="w-4 h-4 rounded-full flex-shrink-0 bg-yellow-400"></span>
+                        <span className="text-xs font-medium text-gray-600">Banco do Brasil</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 bg-gray-100 rounded-full px-3 py-1">
+                        <span className="w-4 h-4 rounded-full flex-shrink-0 bg-blue-700"></span>
+                        <span className="text-xs font-medium text-gray-600">Caixa</span>
+                      </div>
+                    </div>
                   </div>
 
                   {(currentPayment?.nomePagador || currentPayment?.cpfPagador) && (
@@ -387,28 +528,36 @@ const ShopeePixPayment = () => {
                     {copied ? (<><CheckIcon />Código Copiado!</>) : (<><CopyIcon />Copiar Código Pix</>)}
                   </button>
                 </div>
+
                 <div className="bg-gray-50 rounded-lg p-4 mb-4">
                   <p className="font-semibold text-gray-800 text-sm mb-3">Por favor, siga as instruções:</p>
                   <div className="space-y-2.5">
                     <div className="flex gap-2 items-start">
-                      <div className="flex-shrink-0 w-5 h-5 bg-gray-300 rounded-full flex items-center justify-center text-xs font-bold text-gray-700 mt-0.5">1</div>
+                      <div className="flex-shrink-0 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center text-xs font-bold text-white mt-0.5">1</div>
                       <p className="text-xs text-gray-700 leading-relaxed">Acesse o app do seu banco ou internet banking de preferência.</p>
                     </div>
                     <div className="flex gap-2 items-start">
-                      <div className="flex-shrink-0 w-5 h-5 bg-gray-300 rounded-full flex items-center justify-center text-xs font-bold text-gray-700 mt-0.5">2</div>
+                      <div className="flex-shrink-0 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center text-xs font-bold text-white mt-0.5">2</div>
                       <p className="text-xs text-gray-700 leading-relaxed">Escolha pagar via Pix.</p>
                     </div>
                     <div className="flex gap-2 items-start">
-                      <div className="flex-shrink-0 w-5 h-5 bg-gray-300 rounded-full flex items-center justify-center text-xs font-bold text-gray-700 mt-0.5">3</div>
+                      <div className="flex-shrink-0 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center text-xs font-bold text-white mt-0.5">3</div>
                       <p className="text-xs text-gray-700 leading-relaxed">Escaneie o QR Code ou copie e cole o código Pix acima.</p>
                     </div>
                     <div className="flex gap-2 items-start">
-                      <div className="flex-shrink-0 w-5 h-5 bg-gray-300 rounded-full flex items-center justify-center text-xs font-bold text-gray-700 mt-0.5">4</div>
+                      <div className="flex-shrink-0 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center text-xs font-bold text-white mt-0.5">4</div>
                       <p className="text-xs text-gray-700 leading-relaxed">Seu pagamento será aprovado em alguns segundos.</p>
                     </div>
                   </div>
                 </div>
                 <button className="w-full bg-orange-500 text-white py-3 rounded font-bold text-sm hover:bg-orange-600 transition shadow-sm">OK</button>
+                {/* PARTE 7 — Rodapé de segurança */}
+                <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t border-gray-100">
+                  <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  <span className="text-xs text-gray-400">Ambiente 100% seguro e criptografado</span>
+                </div>
               </>
             )}
           </div>
@@ -418,7 +567,7 @@ const ShopeePixPayment = () => {
   );
 };
 
-// ADMIN PANEL
+// ADMIN PANEL — sem nenhuma alteração
 const AdminPanel = ({ onLogout, authToken, loadPayments }) => {
   const [payments, setPayments] = useState([]);
   const [showForm, setShowForm] = useState(false);
